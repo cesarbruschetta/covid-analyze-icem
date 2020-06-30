@@ -113,12 +113,12 @@ class FacebookSpider(scrapy.Spider):
         Parse the given page selecting the posts.
         Then ask recursively for another page.
         """
-        #        #open page in browser for debug
-        #        from scrapy.utils.response import open_in_browser
-        #        open_in_browser(response)
+        #open page in browser for debug
+        # from scrapy.utils.response import open_in_browser
+        # open_in_browser(response)
 
         # select all posts
-        for post in response.xpath("//article[@class='cz ea ge']"):
+        for post in response.xpath("//article[contains(@data-ft,'top_level_post_id')]"):
 
             many_features = post.xpath("./@data-ft").get()
             post_date = parse_date([many_features], {"lang": self.lang})
@@ -137,7 +137,7 @@ class FacebookSpider(scrapy.Spider):
                     "Reached date: {} - post_date: {}".format(self.date, post_date)
                 )
 
-            new = ItemLoader(item=FbcrawlItem(), selector=post)
+            new = ItemLoader(item=FbPostItem(), selector=post)
             if abs(self.count) + 1 > self.max:
                 raise CloseSpider(
                     "Reached max num of post: {}. Crawling finished".format(
@@ -150,6 +150,8 @@ class FacebookSpider(scrapy.Spider):
                 )
             )
             new.add_value("date", post_date)
+            new.add_xpath('post_id','./@data-ft')
+            new.add_xpath('url', ".//a[contains(@href,'footer')]/@href")
 
             # returns full post-link in a list
             post = post.xpath(".//a[contains(@href,'footer')]/@href").extract()
@@ -251,17 +253,14 @@ class FacebookSpider(scrapy.Spider):
 
     def parse_post(self, response):
         new = ItemLoader(
-            item=FbcrawlItem(), response=response, parent=response.meta["item"]
+            item=FbPostItem(), response=response, parent=response.meta["item"]
         )
         new.context["lang"] = self.lang
-
-        new.add_xpath("post_id", "./@data-ft")
-        new.add_xpath("url", ".//a[contains(@href,'footer')]/@href")
         new.add_xpath(
             "source",
             "//td/div/h3/strong/a/text() | //span/strong/a/text() | //div/div/div/a[contains(@href,'post_id')]/strong/text()",
         )
-        new.add_xpath("image", "//img/@src")
+        new.add_xpath("image", "//a/img[contains(@src,'content')]/@src")
         new.add_xpath(
             "text",
             "//div[@data-ft]//p//text() | //div[@data-ft]/div[@class]/div[@class]/text()",

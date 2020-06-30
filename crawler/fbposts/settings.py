@@ -38,7 +38,7 @@ DEFAULT_REQUEST_HEADERS = {
 DUPEFILTER_CLASS = "scrapy.dupefilters.BaseDupeFilter"
 
 # specifies the order of the column to export as CSV
-FEED_EXPORT_FIELDS = ["source", "date", "text", "image", "url"]
+FEED_EXPORT_FIELDS = ["post_id", "source", "date", "text", "image", "url"]
 URLLENGTH_LIMIT = 99999
 FEED_EXPORT_ENCODING = "utf-8"
 LOG_LEVEL = "INFO"
